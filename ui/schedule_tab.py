@@ -470,7 +470,10 @@ def _render_add_task():
                 # Run Now: submit immediately to CLUWE, don't save to database
                 from core.jobs import submit_job
                 from core.paths import to_linux
-                linux_path = to_linux(file_path.strip()).rstrip("/") + "/" + file_name.strip()
+                fn = file_name.strip()
+                if fn and not fn.lower().endswith(".sas"):
+                    fn += ".sas"
+                linux_path = to_linux(file_path.strip()).rstrip("/") + "/" + fn
                 with st.spinner("Submitting to CLUWE..."):
                     result = submit_job(linux_path, schedule_time_local=None, send_email=True)
                 if result.get("status") == "SUCCESS":

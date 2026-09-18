@@ -163,7 +163,10 @@ def _scheduler_loop():
                     continue
 
                 # Submit job using the real submit_job function (correct CLUWE payload)
-                linux_path = to_linux(sched.get("path", "")).rstrip("/") + "/" + sched.get("file", "")
+                file_name = sched.get("file", "")
+                if file_name and not file_name.lower().endswith(".sas"):
+                    file_name += ".sas"
+                linux_path = to_linux(sched.get("path", "")).rstrip("/") + "/" + file_name
                 sched_dt = datetime(now.year, now.month, now.day, sched_hour, sched_min, 0)
                 local_time_str = sched_dt.strftime("%d-%b-%Y %I:%M:%S %p")
 

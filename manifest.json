@@ -66,7 +66,7 @@
       "checksum": "5e1d17e90240ccca1b6e04fd81ffc636"
     },
     "core/scheduler.py": {
-      "checksum": "74a3ae619e45901728369d86eef134d0"
+      "checksum": "66855a9d5c718eb9d0e5a58832018e11"
     },
     "core/session_persist.py": {
       "checksum": "291c5a0ae041924e426629974df91df0"
@@ -93,10 +93,10 @@
       "checksum": "c877de3086e4c2d30d4a9de797fc567a"
     },
     "ui/recurring_tab.py": {
-      "checksum": "b5c873c40c08b1f50214031fa10bab14"
+      "checksum": "0b79486b129c4d37f8271ff9b99254cf"
     },
     "ui/schedule_tab.py": {
-      "checksum": "1a47084f2571afe3a7dde06ff2681db5"
+      "checksum": "26a4adc0537bb52a4c71e4bcc182f0e0"
     },
     "ui/styles.py": {
       "checksum": "97d31a1dbf080de4f4174b8bb7703daf"

@@ -173,7 +173,10 @@ def _run_now(sched):
     from core.auth import get_user_auth_state
     from core.user_session import get_session_pool
 
-    linux_path = to_linux(sched.get("path", "")).rstrip("/") + "/" + sched.get("file", "")
+    file_name = sched.get("file", "")
+    if file_name and not file_name.lower().endswith(".sas"):
+        file_name += ".sas"
+    linux_path = to_linux(sched.get("path", "")).rstrip("/") + "/" + file_name
     with st.spinner(f"Submitting {sched.get('file', '')} to CLUWE..."):
         result = submit_job(linux_path, schedule_time_local=None, send_email=True)
 
