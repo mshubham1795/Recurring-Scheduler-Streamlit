@@ -361,7 +361,9 @@ def _render_add_task():
     # The browse result is stored in _browse_result by the Browse button handler,
     # and applied here on the NEXT rerun (before widgets are instantiated).
     if st.session_state.get("_browse_pending"):
-        st.session_state["at_path"] = st.session_state.pop("_browse_path_buf", "")
+        path_buf = st.session_state.pop("_browse_path_buf", "")
+        if path_buf:  # Only set path if provided (Browse gives path, drop does not)
+            st.session_state["at_path"] = path_buf
         st.session_state["at_file"] = st.session_state.pop("_browse_file_buf", "")
         study_buf = st.session_state.pop("_browse_study_buf", "")
         if study_buf:
@@ -401,7 +403,7 @@ def _render_add_task():
             st.session_state["at_priority"] = "Medium"
         priority = st.selectbox("Priority", ["High", "Medium", "Low"], key="at_priority")
 
-    # Action buttons: Browse + Add Task
+    # Action buttons: Drop file + Add Task
     from config.constants import IS_HEADLESS
     btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 4])
     with btn_col1:
@@ -411,7 +413,6 @@ def _render_add_task():
                 with st.spinner("Opening file picker..."):
                     result = _browse_file()
                 if result:
-                    # Store in buffer keys -- will be applied on next rerun BEFORE widgets render
                     st.session_state["_browse_path_buf"] = result["path"]
                     st.session_state["_browse_file_buf"] = result["file"]
                     st.session_state["_browse_study_buf"] = result["study"] or ""
@@ -421,7 +422,20 @@ def _render_add_task():
                 else:
                     st.toast("No file selected")
         else:
-            # Headless/Linux (Posit Connect): manual path entry
+            # Headless/Linux (Posit Connect): drop .sas file to auto-fill name
+            dropped = st.file_uploader(
+                "Drop .sas file", type=["sas"], key="_drop_sas",
+                label_visibility="collapsed",
+                help="Drop a .sas file here to auto-fill the File Name. You still need to enter the File Path manually."
+            )
+            if dropped:
+                filename = dropped.name
+                study_guess = extract_study_from_path(filename)
+                st.session_state["_browse_file_buf"] = filename
+                st.session_state["_browse_study_buf"] = study_guess or ""
+                st.session_state["_browse_pending"] = True
+                st.toast(f"File name auto-filled: {filename}")
+                st.rerun()
             st.caption("Enter full path above\n(e.g., Z:\\\\qa\\\\...  or  /lillyce/qa/...)")
     with btn_col2:
         if st.button("Add Task", type="primary", key="add_task_btn", use_container_width=True):
