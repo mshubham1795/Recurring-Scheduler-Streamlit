@@ -96,7 +96,7 @@
       "checksum": "0b79486b129c4d37f8271ff9b99254cf"
     },
     "ui/schedule_tab.py": {
-      "checksum": "f1159d6ce2fb831e22b3b87293e981a9"
+      "checksum": "73e60204723ff65b5cf46c101706834f"
     },
     "ui/styles.py": {
       "checksum": "97d31a1dbf080de4f4174b8bb7703daf"
@@ -105,7 +105,7 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e"
     },
     "utils/excel_parser.py": {
-      "checksum": "44274e337c138c75074bcf991882b4b1"
+      "checksum": "d55570dfddc28b9531121be7c3a64525"
     },
     "utils/time_utils.py": {
       "checksum": "018906e54d26e39a05b63bf437d7c66e"

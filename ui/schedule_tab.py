@@ -240,44 +240,61 @@ def _browse_file():
 
 # ---- Server-side file browser (for Posit Connect / headless Linux) --------
 
-_FB_START = "/lillyce"  # Always start here
+# /lillyce itself may not be listable, but its subdirectories are.
+# Show qa and prd as starting shortcuts.
+_FB_SHORTCUTS = ["/lillyce/qa", "/lillyce/prd"]
 
 
 @st.dialog("Browse Folder", width="small")
 def _server_file_browser():
     """Compact scrollable dialog that navigates /lillyce folders.
-    Starts at /lillyce (showing prd, qa, etc.) and lets users drill
-    down to select a .sas file.
+    Shows qa/prd shortcuts when /lillyce itself isn't listable.
     """
     # Initialize current directory
     if "_fb_current_dir" not in st.session_state:
-        st.session_state["_fb_current_dir"] = _FB_START
+        st.session_state["_fb_current_dir"] = ""  # empty = show shortcuts
 
     current_dir = st.session_state["_fb_current_dir"]
 
-    # Compact header: path + Up button on same row
+    # If no current dir or at root level, show shortcuts
+    if not current_dir:
+        st.caption("/lillyce")
+        st.markdown("**Select a folder to browse:**")
+        with st.container(height=300):
+            for shortcut in _FB_SHORTCUTS:
+                label = shortcut.split("/")[-1]  # "qa" or "prd"
+                if st.button(f"📁 {label}", key=f"_fb_sc_{label}",
+                             use_container_width=True):
+                    st.session_state["_fb_current_dir"] = shortcut
+                    st.rerun(scope="fragment")
+        return
+
+    # Compact header: path + Up button
     h_col1, h_col2 = st.columns([4, 1])
     with h_col1:
         st.caption(current_dir)
     with h_col2:
         parent = os.path.dirname(current_dir)
-        can_go_up = (current_dir != _FB_START
-                     and parent.startswith(_FB_START)
-                     and parent != current_dir)
-        if st.button("⬆️", disabled=not can_go_up, key="_fb_up",
-                     help="Go to parent folder"):
-            st.session_state["_fb_current_dir"] = parent
+        # Go up, but if parent is /lillyce (not listable), go back to shortcuts
+        if st.button("⬆️", key="_fb_up", help="Go to parent folder"):
+            if parent == "/lillyce" or parent == current_dir:
+                st.session_state["_fb_current_dir"] = ""  # back to shortcuts
+            else:
+                st.session_state["_fb_current_dir"] = parent
             st.rerun(scope="fragment")
 
     # List directory contents
     try:
         entries = list(os.scandir(current_dir))
     except PermissionError:
-        st.error(f"⛔ Permission denied")
+        st.error("⛔ Permission denied")
+        if st.button("⬅️ Back", key="_fb_back"):
+            st.session_state["_fb_current_dir"] = ""
+            st.rerun(scope="fragment")
         return
     except (FileNotFoundError, OSError):
-        st.error(f"📂 Directory not found")
-        st.session_state["_fb_current_dir"] = _FB_START
+        st.error("📂 Directory not found")
+        st.session_state["_fb_current_dir"] = ""
         return
 
     # Separate into directories and .sas files
@@ -294,14 +311,12 @@ def _server_file_browser():
 
     # Scrollable container for folders + files
     with st.container(height=350):
-        # Folders — compact single-column list
         for i, d in enumerate(dirs):
             if st.button(f"📁 {d.name}", key=f"_fb_d_{i}",
                          use_container_width=True):
                 st.session_state["_fb_current_dir"] = d.path
                 st.rerun(scope="fragment")
 
-        # .sas files — primary buttons to stand out
         if sas_files:
             st.divider()
             for i, f in enumerate(sas_files):
@@ -358,7 +373,7 @@ def _render_add_task():
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        study = st.text_input("Study", placeholder="GZQD", key="at_study")
+        study = st.text_input("Study", placeholder="XXXX", key="at_study")
     with col2:
         file_path = st.text_input("File Path", placeholder="/lillyce/qa/...", key="at_path")
     with col3:

@@ -150,35 +150,40 @@ def create_template_workbook():
         ["Recurring Scheduler -- Excel Template Instructions"],
         [""],
         ["REQUIRED COLUMNS:"],
-        ["  Study_Name    -- Unique study identifier (e.g., GZQD, CPMP)"],
+        ["  Study_Name    -- Unique study identifier (e.g., XXXX)"],
         ["  File_Path     -- Full directory path to the SAS program"],
+        ["                   Accepted formats: Z:\\qa\\... or /lillyce/qa/..."],
         ["  File_Name     -- SAS script filename (must end in .sas)"],
-        ["  Start_Time    -- Execution time in HH:MM 24-hour format"],
-        ["  Frequency     -- Daily (Mon-Fri) | Weekly (specific days)"],
+        ["  Start_Time    -- Execution time in HH:MM 24-hour format (IST)"],
+        ["  Frequency     -- Daily or Weekly (see details below)"],
         [""],
         ["OPTIONAL COLUMNS:"],
         ["  Days_of_Week  -- Comma-separated days (e.g., Mon, Wed, Fri)"],
-        ["                   Required when Frequency = Weekly"],
+        ["                   REQUIRED when Frequency = Weekly"],
+        ["                   Ignored when Frequency = Daily"],
         ["  End_Date      -- When scheduling stops (YYYY-MM-DD). Leave blank for no end date."],
-        ["  Priority      -- High | Medium | Low"],
-        [""],
-        ["HOW IT WORKS:"],
-        ["  1. Fill in the Schedule sheet with your SAS programs"],
-        ["  2. Upload this file in the app and click Save All"],
-        ["  3. The backend will automatically submit jobs to CLUWE at the defined time/day"],
-        ["  4. Jobs run until End_Date (if set), or forever if left blank"],
-        ["  5. You can Run Now, Edit, Deactivate, or Reactivate schedules from the app"],
+        ["  Priority      -- High | Medium | Low (default: Medium)"],
         [""],
         ["FREQUENCY OPTIONS:"],
-        ["  Daily   -- Runs Monday to Friday at the specified time"],
-        ["  Weekly  -- Runs only on specified days (set in Days_of_Week column)"],
-        ["  Run Now -- Use in the app to execute a task immediately (not saved)"],
+        ["  Daily   -- Runs automatically Monday to Friday at the specified Start_Time."],
+        ["             No Days_of_Week needed (it is ignored for Daily)."],
+        ["  Weekly  -- Runs only on the specific days listed in the Days_of_Week column."],
+        ["             You MUST specify Days_of_Week (e.g., Mon, Wed, Fri)."],
+        ["             Valid day names: Mon, Tue, Wed, Thu, Fri, Sat, Sun"],
+        [""],
+        ["HOW IT WORKS:"],
+        ["  1. Fill in the Schedule sheet with your SAS programs (one row per schedule)"],
+        ["  2. Upload this file in the app and click Save All"],
+        ["  3. The scheduler automatically submits jobs to CLUWE at the defined time/day"],
+        ["  4. Jobs run until End_Date (if set), or indefinitely if left blank"],
+        ["  5. You can Run Now, Edit, Deactivate, or Reactivate schedules from the app"],
         [""],
         ["NOTES:"],
-        ["  - File paths can use Z:\\ or /lillyce/ format"],
+        ["  - File paths can use Z:\\ drive letter or /lillyce/ Linux format"],
         ["  - Paths and filenames must NOT contain spaces"],
         ["  - Same file at different times = separate schedules"],
         ["  - CLUWE sends email notifications when jobs complete"],
+        ["  - All times are in IST (Indian Standard Time)"],
     ]
 
     for row in instructions:
@@ -192,27 +197,7 @@ def create_template_workbook():
                'Frequency', 'Days_of_Week', 'End_Date', 'Priority']
     ws_sched.append(headers)
 
-    # Example data
-    ws_sched.append([
-        'GZQD',
-        'Z:\\qa\\ly3537031\\j2s_mc_gzqd\\diva\\programs\\oversight',
-        'ae_checks.sas',
-        '06:00',
-        'Daily',
-        '',
-        '',
-        'High'
-    ])
-    ws_sched.append([
-        'GZME',
-        'Z:\\qa\\ly3537031\\j2s_mc_gzme\\diva\\programs\\oversight\\diva',
-        'fmcall.sas',
-        '09:00',
-        'Weekly',
-        'Tue, Thu',
-        '2026-12-31',
-        'Medium'
-    ])
+    # No sample data — user fills in their own schedules
 
     # Set column widths
     widths = [15, 60, 30, 12, 12, 20, 15, 10]
