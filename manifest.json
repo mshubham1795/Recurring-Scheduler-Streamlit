@@ -30,7 +30,7 @@
       "checksum": "6da283964a3bd9b973be3091bb5480be"
     },
     "config/constants.py": {
-      "checksum": "ead2429f846fa22d7747c0fd9b7f3b5e"
+      "checksum": "bfe3677a7db3a466ebe840351ef5a644"
     },
     "config/__init__.py": {
       "checksum": "d41d8cd98f00b204e9800998ecf8427e"
@@ -80,9 +80,6 @@
     "core/__init__.py": {
       "checksum": "a3c927ea5c364d8758e3f68dacad7ed4"
     },
-    "data/schema.sql": {
-      "checksum": "e381baf18a6f06805fa51a79fb5e2cf0"
-    },
     "ui/components.py": {
       "checksum": "03775eee3442ebfd18970ad500cd1cd8"
     },
@@ -118,6 +115,9 @@
     },
     "utils/__init__.py": {
       "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "data/schema.sql": {
+      "checksum": "e381baf18a6f06805fa51a79fb5e2cf0"
     }
   },
   "packages": {
