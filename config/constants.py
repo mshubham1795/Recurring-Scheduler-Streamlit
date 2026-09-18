@@ -14,10 +14,15 @@ IS_POSIT_CONNECT = bool(os.environ.get("RSTUDIO_PRODUCT") == "CONNECT")
 IS_HEADLESS = IS_POSIT_CONNECT or PLATFORM != "Windows"
 
 # ============================================================================
-# PATHS -- resolve to parent directory for shared persistence
+# PATHS -- on Posit Connect, everything must stay inside APP_DIR (writable).
+# Locally, use parent directory for shared persistence.
 # ============================================================================
 APP_DIR = Path(__file__).parent.parent  # sas_scheduler_streamlit/
-PROJECT_DIR = APP_DIR.parent  # Recurring_Scheduler/ (contains schedules.json)
+
+if IS_POSIT_CONNECT:
+    PROJECT_DIR = APP_DIR  # On Connect, APP_DIR is the writable root
+else:
+    PROJECT_DIR = APP_DIR.parent  # Locally: Recurring_Scheduler/
 
 SCHEDULES_FILE = PROJECT_DIR / "schedules.json"
 AUTH_METHOD_FILE = PROJECT_DIR / "auth_method.json"
