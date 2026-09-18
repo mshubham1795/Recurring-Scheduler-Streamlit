@@ -75,9 +75,9 @@ def render():
             st.markdown(f"**{sched.get('study', '')}**")
         with cols[1]:
             fp = (sched.get('path', '') + '/' if sched.get('path') else '') + sched.get('file', '')
-            st.markdown(f"`{fp}`")
+            st.write(fp)
         with cols[2]:
-            st.markdown(f"`{sched.get('time', '')}`")
+            st.write(sched.get('time', ''))
         with cols[3]:
             st.write(sched.get('freq', ''))
         with cols[4]:

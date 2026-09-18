@@ -93,10 +93,10 @@
       "checksum": "c877de3086e4c2d30d4a9de797fc567a"
     },
     "ui/recurring_tab.py": {
-      "checksum": "0b79486b129c4d37f8271ff9b99254cf"
+      "checksum": "a8fe546d18f4e47df145e4c6cc65f111"
     },
     "ui/schedule_tab.py": {
-      "checksum": "73e60204723ff65b5cf46c101706834f"
+      "checksum": "0f2827cc87bdaa4f4d1e3631483aa2d6"
     },
     "ui/styles.py": {
       "checksum": "97d31a1dbf080de4f4174b8bb7703daf"

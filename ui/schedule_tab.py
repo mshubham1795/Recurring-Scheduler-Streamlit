@@ -424,10 +424,8 @@ def _render_add_task():
                 else:
                     st.toast("No file selected")
         else:
-            # Headless/Linux (Posit Connect): server-side file browser dialog
-            if st.button("📂 Browse Folder", key="browse_srv_btn", type="secondary",
-                         use_container_width=True):
-                _server_file_browser()
+            # Headless/Linux (Posit Connect): manual path entry
+            st.caption("Enter full path above\n(e.g., Z:\\\\qa\\\\...  or  /lillyce/qa/...)")
     with btn_col2:
         if st.button("Add Task", type="primary", key="add_task_btn", use_container_width=True):
             if not file_name:
