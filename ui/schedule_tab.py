@@ -145,28 +145,25 @@ def _render_job_table():
 
         with cols[2]:
             fp = (job['path'] + '/' if job['path'] else '') + job['file']
-            st.markdown(f"`{fp}`")
+            st.write(fp)
 
         with cols[3]:
             warn_html = ""
             if job.get("timeWarn"):
                 warn_html = " ⚠️"
-            st.markdown(f"`{job['time']}`{warn_html}")
+            st.write(f"{job['time']}{warn_html}")
 
         with cols[4]:
             days_str = f"{job['freq']}"
             if job.get('days'):
                 days_str += f" ({job['days']})"
-            st.markdown(days_str, unsafe_allow_html=True)
+            st.write(days_str)
 
         with cols[5]:
-            st.markdown(f"`{job.get('endDate') or 'No end'}`")
+            st.write(job.get('endDate') or 'No end')
 
         with cols[6]:
-            st.markdown(
-                f'<span class="pr pr-{job["priority"]}">{job["priority"]}</span>',
-                unsafe_allow_html=True
-            )
+            st.write(job.get("priority", "Medium"))
 
         with cols[7]:
             if blocked:
