@@ -41,6 +41,13 @@ DB_PATH = DB_DIR / "scheduler.db"
 ENCRYPTION_KEY_ENV = "SCHEDULER_ENCRYPTION_KEY"
 
 # ============================================================================
+# TIMEZONE -- Schedule times are entered in local time (IST).
+# On Posit Connect (UTC server), we need the offset to convert correctly.
+# Override via SCHEDULER_TZ_OFFSET_HOURS env var if needed.
+# ============================================================================
+TZ_OFFSET_HOURS = float(os.environ.get("SCHEDULER_TZ_OFFSET_HOURS", "5.5"))  # IST = +5:30
+
+# ============================================================================
 # CLUWE API URLs
 # ============================================================================
 CLUWE_BASE = "https://cluwe.am.lilly.com"

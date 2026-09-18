@@ -121,9 +121,16 @@ def fix_date(value):
 def local_to_utc(time_str):
     """Convert local time string to UTC for CLUWE's scheduledUTC field.
 
+    Uses the configured TZ_OFFSET_HOURS (IST +5:30 by default) so this
+    works correctly on both the local dev machine and on Posit Connect
+    (whose server time is UTC).
+
     Input format: '06-May-2026 10:43:00 AM' (local)
     Output format: '06-May-2026 05:13:00 AM' (UTC)
     """
+    from config.constants import TZ_OFFSET_HOURS
+    from datetime import timedelta
+
     try:
         parts = time_str.strip().split()
         date_parts = parts[0].split('-')
@@ -143,8 +150,8 @@ def local_to_utc(time_str):
             hour = 0
 
         local_dt = datetime(year, mon, day, hour, minute, sec)
-        local_offset = datetime.now() - datetime.utcnow()
-        utc_dt = local_dt - local_offset
+        # Use configured offset (IST = +5:30) instead of server's local offset
+        utc_dt = local_dt - timedelta(hours=TZ_OFFSET_HOURS)
 
         utc_hour = utc_dt.hour
         utc_ampm = 'PM' if utc_hour >= 12 else 'AM'

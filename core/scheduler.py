@@ -6,7 +6,7 @@ Uses @st.cache_resource to ensure the thread starts exactly once per server proc
 import time
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
@@ -16,11 +16,23 @@ from core.persistence import log_execution
 from core.email_notify import send_session_expiry_notification
 from core.paths import to_linux
 from core.jobs import submit_job
+from config.constants import TZ_OFFSET_HOURS
 
 log = logging.getLogger("SASBackend")
 
 # Process-global in-memory session pool (no passwords stored)
 _session_pool = get_session_pool()
+
+# User timezone as a fixed offset (IST = +5:30 by default)
+_USER_TZ = timezone(timedelta(hours=TZ_OFFSET_HOURS))
+
+
+def _now_local():
+    """Return current time in the user's timezone (IST by default).
+    Works correctly regardless of server timezone (UTC on Posit Connect,
+    or local time on Windows dev machine).
+    """
+    return datetime.now(_USER_TZ)
 
 
 def should_run_today(sched):
@@ -30,7 +42,7 @@ def should_run_today(sched):
     """
     freq = sched.get("freq", "Daily").lower()
     days = sched.get("days", "")
-    today = datetime.now()
+    today = _now_local()
     day_name = today.strftime("%A")
     day_abbr = today.strftime("%a")
     weekday = today.weekday()
@@ -64,7 +76,7 @@ def _scheduler_loop():
         try:
             time.sleep(15)
 
-            now = datetime.now()
+            now = _now_local()
             today_str = now.strftime("%Y%m%d")
 
             # Query all active schedules from database (across all users)
@@ -89,7 +101,7 @@ def _scheduler_loop():
                         if now.date() > ed.date():
                             conn.execute(
                                 "UPDATE schedules SET active = 0, updated_at = ? WHERE id = ?",
-                                (now.isoformat(), schedule_id)
+                                (now.strftime("%Y-%m-%dT%H:%M:%S"), schedule_id)
                             )
                             conn.commit()
                             log.info(f"[SCHED] Deactivated expired: {sched.get('file', '')} (end {end_date})")
