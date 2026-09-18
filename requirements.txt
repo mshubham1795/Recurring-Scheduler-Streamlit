@@ -1,0 +1,6 @@
+streamlit>=1.33.0
+openpyxl>=3.1.0
+cryptography>=41.0.0
+
+# Optional: enables auto-refresh for job status polling (install if network allows)
+# streamlit-autorefresh>=1.0.0

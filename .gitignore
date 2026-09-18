@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Data & logs (generated at runtime)
+data/scheduler.db
+logs/
+*.log
+
+# Deployment bundle
+*.tar.gz
+
+# Environment
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude
+.claude/
+
+# Posit Connect
+manifest.json
+rsconnect-python/
+rsconnect/
+
+# Sensitive data files
+data/.encryption_key
+data/scheduler.db*
