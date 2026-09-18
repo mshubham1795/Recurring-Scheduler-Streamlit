@@ -240,81 +240,47 @@ def _browse_file():
 
 # ---- Server-side file browser (for Posit Connect / headless Linux) --------
 
-# Common mount points to try (in order of preference)
-_FB_ROOTS = ["/lillyce", "/sasdata", "/ifs", "/home", "/tmp"]
+_FB_START = "/lillyce"  # Always start here
 
 
-def _find_default_root():
-    """Find the first accessible root directory."""
-    for root in _FB_ROOTS:
-        try:
-            if os.path.isdir(root) and os.access(root, os.R_OK):
-                return root
-        except OSError:
-            continue
-    return "/"
-
-
-@st.dialog("Browse Server Files", width="large")
+@st.dialog("Browse Folder", width="small")
 def _server_file_browser():
-    """Streamlit dialog that navigates the server filesystem.
-    Shows directories and .sas files. User can type any path in the
-    address bar or navigate by clicking folders.
-    On file selection, writes to the same session_state buffer keys
-    that _browse_file() uses, so the receiving logic in _render_add_task()
-    works unchanged.
+    """Compact scrollable dialog that navigates /lillyce folders.
+    Starts at /lillyce (showing prd, qa, etc.) and lets users drill
+    down to select a .sas file.
     """
     # Initialize current directory
     if "_fb_current_dir" not in st.session_state:
-        st.session_state["_fb_current_dir"] = _find_default_root()
+        st.session_state["_fb_current_dir"] = _FB_START
 
     current_dir = st.session_state["_fb_current_dir"]
 
-    # Address bar: user can type/paste any path and press Enter
-    new_path = st.text_input(
-        "Path", value=current_dir, key="_fb_path_input",
-        placeholder="Type a path and press Enter (e.g. /lillyce/qa/study)",
-        label_visibility="collapsed"
-    )
-    # Navigate to typed path if changed
-    if new_path and new_path != current_dir and os.path.isdir(new_path):
-        st.session_state["_fb_current_dir"] = new_path
-        st.rerun(scope="fragment")
-
-    # Navigation buttons
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 4])
-    with nav_col1:
+    # Compact header: path + Up button on same row
+    h_col1, h_col2 = st.columns([4, 1])
+    with h_col1:
+        st.caption(current_dir)
+    with h_col2:
         parent = os.path.dirname(current_dir)
-        can_go_up = current_dir != "/" and parent != current_dir
-        if st.button("⬆️ Up", disabled=not can_go_up, key="_fb_up",
-                     use_container_width=True):
+        can_go_up = (current_dir != _FB_START
+                     and parent.startswith(_FB_START)
+                     and parent != current_dir)
+        if st.button("⬆️", disabled=not can_go_up, key="_fb_up",
+                     help="Go to parent folder"):
             st.session_state["_fb_current_dir"] = parent
             st.rerun(scope="fragment")
-    with nav_col2:
-        if st.button("🏠 /lillyce", key="_fb_home", use_container_width=True):
-            st.session_state["_fb_current_dir"] = "/lillyce"
-            st.rerun(scope="fragment")
-
-    st.divider()
 
     # List directory contents
     try:
         entries = list(os.scandir(current_dir))
     except PermissionError:
-        st.error(f"⛔ Permission denied: `{current_dir}`")
-        st.caption("The Connect service account cannot read this directory. "
-                   "Try typing a different path above, or type the file path "
-                   "directly in the form fields below.")
+        st.error(f"⛔ Permission denied")
         return
-    except FileNotFoundError:
-        st.error(f"📂 Directory not found: `{current_dir}`")
-        st.caption("Try typing a valid path in the address bar above.")
-        return
-    except OSError as e:
-        st.error(f"Error reading directory: {e}")
+    except (FileNotFoundError, OSError):
+        st.error(f"📂 Directory not found")
+        st.session_state["_fb_current_dir"] = _FB_START
         return
 
-    # Separate into directories and .sas files, sorted alphabetically
+    # Separate into directories and .sas files
     dirs = sorted([e for e in entries if e.is_dir(follow_symlinks=True)],
                   key=lambda e: e.name.lower())
     sas_files = sorted([e for e in entries
@@ -323,47 +289,34 @@ def _server_file_browser():
                        key=lambda e: e.name.lower())
 
     if not dirs and not sas_files:
-        st.info("No subdirectories or .sas files in this directory.")
+        st.info("No subdirectories or .sas files here.")
         return
 
-    # Show directories
-    if dirs:
-        st.markdown("**Folders**")
-        # Display in a grid (3 columns)
-        for row_start in range(0, len(dirs), 3):
-            row_dirs = dirs[row_start:row_start + 3]
-            cols = st.columns(3)
-            for idx, d in enumerate(row_dirs):
-                with cols[idx]:
-                    if st.button(f"📁 {d.name}", key=f"_fb_d_{row_start + idx}",
-                                 use_container_width=True):
-                        st.session_state["_fb_current_dir"] = d.path
-                        st.rerun(scope="fragment")
+    # Scrollable container for folders + files
+    with st.container(height=350):
+        # Folders — compact single-column list
+        for i, d in enumerate(dirs):
+            if st.button(f"📁 {d.name}", key=f"_fb_d_{i}",
+                         use_container_width=True):
+                st.session_state["_fb_current_dir"] = d.path
+                st.rerun(scope="fragment")
 
-    # Show .sas files
-    if sas_files:
-        st.markdown("**.sas Files** — click to select")
-        for row_start in range(0, len(sas_files), 3):
-            row_files = sas_files[row_start:row_start + 3]
-            cols = st.columns(3)
-            for idx, f in enumerate(row_files):
-                with cols[idx]:
-                    if st.button(f"📄 {f.name}", key=f"_fb_f_{row_start + idx}",
-                                 use_container_width=True, type="primary"):
-                        # File selected — populate the form via buffer keys
-                        dirpath = os.path.dirname(f.path)
-                        filename = f.name
-                        study = extract_study_from_path(f.path)
+        # .sas files — primary buttons to stand out
+        if sas_files:
+            st.divider()
+            for i, f in enumerate(sas_files):
+                if st.button(f"📄 {f.name}", key=f"_fb_f_{i}",
+                             use_container_width=True, type="primary"):
+                    dirpath = os.path.dirname(f.path)
+                    filename = f.name
+                    study = extract_study_from_path(f.path)
 
-                        st.session_state["_browse_path_buf"] = dirpath
-                        st.session_state["_browse_file_buf"] = filename
-                        st.session_state["_browse_study_buf"] = study or ""
-                        st.session_state["_browse_pending"] = True
-                        # Clean up dialog state
-                        st.session_state.pop("_fb_current_dir", None)
-                        st.session_state.pop("_fb_path_input", None)
-                        # Close dialog and trigger form fill
-                        st.rerun()
+                    st.session_state["_browse_path_buf"] = dirpath
+                    st.session_state["_browse_file_buf"] = filename
+                    st.session_state["_browse_study_buf"] = study or ""
+                    st.session_state["_browse_pending"] = True
+                    st.session_state.pop("_fb_current_dir", None)
+                    st.rerun()
 
 
 def _render_add_task():
@@ -457,7 +410,7 @@ def _render_add_task():
                     st.toast("No file selected")
         else:
             # Headless/Linux (Posit Connect): server-side file browser dialog
-            if st.button("📂 Browse Server", key="browse_srv_btn", type="secondary",
+            if st.button("📂 Browse Folder", key="browse_srv_btn", type="secondary",
                          use_container_width=True):
                 _server_file_browser()
     with btn_col2:
