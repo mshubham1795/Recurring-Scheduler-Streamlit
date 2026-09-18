@@ -33,7 +33,6 @@ Thumbs.db
 .claude/
 
 # Posit Connect
-manifest.json
 rsconnect-python/
 rsconnect/
 

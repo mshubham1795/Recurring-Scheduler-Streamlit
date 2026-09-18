@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "locale": "en_US",
+  "metadata": {
+    "appmode": "python-streamlit",
+    "entrypoint": "app.py",
+    "primary_document": "app.py",
+    "content_category": "",
+    "has_parameters": false
+  },
+  "python": {
+    "version": "3.13.14",
+    "package_manager": {
+      "name": "pip",
+      "version": "24.0",
+      "package_file": "requirements.txt"
+    }
+  },
+  "files": {
+    "app.py": {
+      "checksum": "f99565df906c5f6a1d348afa4944fac4"
+    },
+    "DEPLOY.md": {
+      "checksum": "a22162ab3bf005e0e171a4654e190ce4"
+    },
+    "requirements.txt": {
+      "checksum": "4fcb3efe427baa698c800d87e9cb384e"
+    },
+    "streamlit/config.toml": {
+      "checksum": "6da283964a3bd9b973be3091bb5480be"
+    },
+    "config/constants.py": {
+      "checksum": "ead2429f846fa22d7747c0fd9b7f3b5e"
+    },
+    "config/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "core/auth.py": {
+      "checksum": "e456877d5adc3b8418c94ecbc152950d"
+    },
+    "core/crypto.py": {
+      "checksum": "65dd21b26183481780eb1d19daaaa761"
+    },
+    "core/database.py": {
+      "checksum": "57a3b591a214aad5fec572bf9ed72b5d"
+    },
+    "core/email_notify.py": {
+      "checksum": "e17a135427a2bf03023282e6e45591c7"
+    },
+    "core/http_client.py": {
+      "checksum": "eaef53b1dbb0f7f9d0d4a7953860aa95"
+    },
+    "core/jobs.py": {
+      "checksum": "d86de225a000f70608af207de218cbd7"
+    },
+    "core/log_checker.py": {
+      "checksum": "db2bd594c931ca319e178de2459c528a"
+    },
+    "core/migration.py": {
+      "checksum": "519b9b67ec009cf419ef34597ae54589"
+    },
+    "core/paths.py": {
+      "checksum": "71f10f4cb20196c4195aaccf672c77ad"
+    },
+    "core/persistence.py": {
+      "checksum": "5e1d17e90240ccca1b6e04fd81ffc636"
+    },
+    "core/scheduler.py": {
+      "checksum": "da9e1d838ed425372ea228bd3de20ce2"
+    },
+    "core/session_persist.py": {
+      "checksum": "291c5a0ae041924e426629974df91df0"
+    },
+    "core/sspi.py": {
+      "checksum": "51a38a586a3d4d520fe51a28d3c41d8c"
+    },
+    "core/user_session.py": {
+      "checksum": "7e8dd3978e30d51a9b40aceca18d1879"
+    },
+    "core/__init__.py": {
+      "checksum": "a3c927ea5c364d8758e3f68dacad7ed4"
+    },
+    "data/schema.sql": {
+      "checksum": "e381baf18a6f06805fa51a79fb5e2cf0"
+    },
+    "ui/components.py": {
+      "checksum": "03775eee3442ebfd18970ad500cd1cd8"
+    },
+    "ui/header.py": {
+      "checksum": "2ff34e1664d7e6227f6ef2b1d5aa92de"
+    },
+    "ui/inactive_tab.py": {
+      "checksum": "1bcf59fe4756bf4102b140b1e3a89f73"
+    },
+    "ui/login.py": {
+      "checksum": "c877de3086e4c2d30d4a9de797fc567a"
+    },
+    "ui/recurring_tab.py": {
+      "checksum": "b5c873c40c08b1f50214031fa10bab14"
+    },
+    "ui/schedule_tab.py": {
+      "checksum": "3ff5981f641039ddca7fd5ccb674d9c7"
+    },
+    "ui/styles.py": {
+      "checksum": "97d31a1dbf080de4f4174b8bb7703daf"
+    },
+    "ui/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/excel_parser.py": {
+      "checksum": "44274e337c138c75074bcf991882b4b1"
+    },
+    "utils/time_utils.py": {
+      "checksum": "1fa69e53d574f440ec6f3f95678ee827"
+    },
+    "utils/validators.py": {
+      "checksum": "1c79e3abef1d95e54448dc256b0a5726"
+    },
+    "utils/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+  },
+  "packages": {
+    "streamlit": {
+      "source": "pypi",
+      "version": "1.57.0"
+    },
+    "openpyxl": {
+      "source": "pypi",
+      "version": "3.1.5"
+    },
+    "cryptography": {
+      "source": "pypi",
+      "version": "46.0.5"
+    }
+  }
+}
