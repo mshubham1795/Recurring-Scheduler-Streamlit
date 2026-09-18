@@ -238,6 +238,105 @@ def _browse_file():
     }
 
 
+# ---- Server-side file browser (for Posit Connect / headless Linux) --------
+
+_FB_ROOT = "/lillyce"  # Root directory for the server-side file browser
+
+
+@st.dialog("Browse Server Files", width="large")
+def _server_file_browser():
+    """Streamlit dialog that navigates the server filesystem.
+    Shows directories and .sas files under /lillyce.
+    On file selection, writes to the same session_state buffer keys
+    that _browse_file() uses, so the receiving logic in _render_add_task()
+    works unchanged.
+    """
+    # Initialize current directory
+    if "_fb_current_dir" not in st.session_state:
+        st.session_state["_fb_current_dir"] = _FB_ROOT
+
+    current_dir = st.session_state["_fb_current_dir"]
+
+    # Breadcrumb / path display + Up button
+    path_col, up_col = st.columns([5, 1])
+    with path_col:
+        st.markdown(f"📁 **`{current_dir}`**")
+    with up_col:
+        # Allow going up, but not above root
+        parent = os.path.dirname(current_dir)
+        can_go_up = (current_dir != _FB_ROOT and parent.startswith(_FB_ROOT))
+        if st.button("⬆️ Up", disabled=not can_go_up, key="_fb_up",
+                     use_container_width=True):
+            st.session_state["_fb_current_dir"] = parent
+            st.rerun(scope="fragment")
+
+    st.divider()
+
+    # List directory contents
+    try:
+        entries = list(os.scandir(current_dir))
+    except PermissionError:
+        st.warning(f"⛔ Permission denied: `{current_dir}`")
+        return
+    except FileNotFoundError:
+        st.warning(f"📂 Directory not found: `{current_dir}`")
+        st.session_state["_fb_current_dir"] = _FB_ROOT
+        return
+    except OSError as e:
+        st.warning(f"Error reading directory: {e}")
+        return
+
+    # Separate into directories and .sas files, sorted alphabetically
+    dirs = sorted([e for e in entries if e.is_dir(follow_symlinks=True)],
+                  key=lambda e: e.name.lower())
+    sas_files = sorted([e for e in entries
+                        if e.is_file(follow_symlinks=True)
+                        and e.name.lower().endswith(".sas")],
+                       key=lambda e: e.name.lower())
+
+    if not dirs and not sas_files:
+        st.info("No subdirectories or .sas files in this directory.")
+        return
+
+    # Show directories
+    if dirs:
+        st.markdown("**Folders**")
+        # Display in a grid (3 columns)
+        for row_start in range(0, len(dirs), 3):
+            row_dirs = dirs[row_start:row_start + 3]
+            cols = st.columns(3)
+            for idx, d in enumerate(row_dirs):
+                with cols[idx]:
+                    if st.button(f"📁 {d.name}", key=f"_fb_d_{row_start + idx}",
+                                 use_container_width=True):
+                        st.session_state["_fb_current_dir"] = d.path
+                        st.rerun(scope="fragment")
+
+    # Show .sas files
+    if sas_files:
+        st.markdown("**.sas Files** — click to select")
+        for row_start in range(0, len(sas_files), 3):
+            row_files = sas_files[row_start:row_start + 3]
+            cols = st.columns(3)
+            for idx, f in enumerate(row_files):
+                with cols[idx]:
+                    if st.button(f"📄 {f.name}", key=f"_fb_f_{row_start + idx}",
+                                 use_container_width=True, type="primary"):
+                        # File selected — populate the form via buffer keys
+                        dirpath = os.path.dirname(f.path)
+                        filename = f.name
+                        study = extract_study_from_path(f.path)
+
+                        st.session_state["_browse_path_buf"] = dirpath
+                        st.session_state["_browse_file_buf"] = filename
+                        st.session_state["_browse_study_buf"] = study or ""
+                        st.session_state["_browse_pending"] = True
+                        # Clean up dialog state
+                        st.session_state.pop("_fb_current_dir", None)
+                        # Close dialog and trigger form fill
+                        st.rerun()
+
+
 def _render_add_task():
     """Render the Add Task form (always visible, no expander)."""
     # Show success message if a task was just added
@@ -328,8 +427,10 @@ def _render_add_task():
                 else:
                     st.toast("No file selected")
         else:
-            # Headless/Linux (Posit Connect): show helper text instead of Browse
-            st.caption("Enter full Linux path above (e.g., /lillyce/qa/...)")
+            # Headless/Linux (Posit Connect): server-side file browser dialog
+            if st.button("📂 Browse Server", key="browse_srv_btn", type="secondary",
+                         use_container_width=True):
+                _server_file_browser()
     with btn_col2:
         if st.button("Add Task", type="primary", key="add_task_btn", use_container_width=True):
             if not file_name:
