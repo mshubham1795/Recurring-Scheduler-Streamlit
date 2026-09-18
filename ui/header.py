@@ -16,6 +16,14 @@ def render_header():
     # to style the parent stHorizontalBlock that contains it.
     st.markdown("""
     <style>
+    /* Remove Streamlit's default top padding so header sits at the top */
+    .stMainBlockContainer, .block-container {
+        padding-top: 1rem !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+
     /* Red background on the columns row containing #hdr-mark */
     [data-testid="stHorizontalBlock"]:has(#hdr-mark) {
         background: #C00000;
