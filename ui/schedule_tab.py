@@ -240,34 +240,59 @@ def _browse_file():
 
 # ---- Server-side file browser (for Posit Connect / headless Linux) --------
 
-_FB_ROOT = "/lillyce"  # Root directory for the server-side file browser
+# Common mount points to try (in order of preference)
+_FB_ROOTS = ["/lillyce", "/sasdata", "/ifs", "/home", "/tmp"]
+
+
+def _find_default_root():
+    """Find the first accessible root directory."""
+    for root in _FB_ROOTS:
+        try:
+            if os.path.isdir(root) and os.access(root, os.R_OK):
+                return root
+        except OSError:
+            continue
+    return "/"
 
 
 @st.dialog("Browse Server Files", width="large")
 def _server_file_browser():
     """Streamlit dialog that navigates the server filesystem.
-    Shows directories and .sas files under /lillyce.
+    Shows directories and .sas files. User can type any path in the
+    address bar or navigate by clicking folders.
     On file selection, writes to the same session_state buffer keys
     that _browse_file() uses, so the receiving logic in _render_add_task()
     works unchanged.
     """
     # Initialize current directory
     if "_fb_current_dir" not in st.session_state:
-        st.session_state["_fb_current_dir"] = _FB_ROOT
+        st.session_state["_fb_current_dir"] = _find_default_root()
 
     current_dir = st.session_state["_fb_current_dir"]
 
-    # Breadcrumb / path display + Up button
-    path_col, up_col = st.columns([5, 1])
-    with path_col:
-        st.markdown(f"📁 **`{current_dir}`**")
-    with up_col:
-        # Allow going up, but not above root
+    # Address bar: user can type/paste any path and press Enter
+    new_path = st.text_input(
+        "Path", value=current_dir, key="_fb_path_input",
+        placeholder="Type a path and press Enter (e.g. /lillyce/qa/study)",
+        label_visibility="collapsed"
+    )
+    # Navigate to typed path if changed
+    if new_path and new_path != current_dir and os.path.isdir(new_path):
+        st.session_state["_fb_current_dir"] = new_path
+        st.rerun(scope="fragment")
+
+    # Navigation buttons
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 4])
+    with nav_col1:
         parent = os.path.dirname(current_dir)
-        can_go_up = (current_dir != _FB_ROOT and parent.startswith(_FB_ROOT))
+        can_go_up = current_dir != "/" and parent != current_dir
         if st.button("⬆️ Up", disabled=not can_go_up, key="_fb_up",
                      use_container_width=True):
             st.session_state["_fb_current_dir"] = parent
+            st.rerun(scope="fragment")
+    with nav_col2:
+        if st.button("🏠 /lillyce", key="_fb_home", use_container_width=True):
+            st.session_state["_fb_current_dir"] = "/lillyce"
             st.rerun(scope="fragment")
 
     st.divider()
@@ -276,14 +301,17 @@ def _server_file_browser():
     try:
         entries = list(os.scandir(current_dir))
     except PermissionError:
-        st.warning(f"⛔ Permission denied: `{current_dir}`")
+        st.error(f"⛔ Permission denied: `{current_dir}`")
+        st.caption("The Connect service account cannot read this directory. "
+                   "Try typing a different path above, or type the file path "
+                   "directly in the form fields below.")
         return
     except FileNotFoundError:
-        st.warning(f"📂 Directory not found: `{current_dir}`")
-        st.session_state["_fb_current_dir"] = _FB_ROOT
+        st.error(f"📂 Directory not found: `{current_dir}`")
+        st.caption("Try typing a valid path in the address bar above.")
         return
     except OSError as e:
-        st.warning(f"Error reading directory: {e}")
+        st.error(f"Error reading directory: {e}")
         return
 
     # Separate into directories and .sas files, sorted alphabetically
@@ -333,6 +361,7 @@ def _server_file_browser():
                         st.session_state["_browse_pending"] = True
                         # Clean up dialog state
                         st.session_state.pop("_fb_current_dir", None)
+                        st.session_state.pop("_fb_path_input", None)
                         # Close dialog and trigger form fill
                         st.rerun()
 
