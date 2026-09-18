@@ -24,20 +24,25 @@ except ImportError:
     HAS_AUTOREFRESH = False
 
 # ============================================================================
-# LOGGING SETUP
+# LOGGING SETUP -- fall back to stdout-only if log dir isn't writable
 # ============================================================================
 from config.constants import LOG_DIR
 
-LOG_DIR.mkdir(exist_ok=True)
+_log_handlers = [logging.StreamHandler(sys.stdout)]
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    _log_handlers.append(
+        logging.FileHandler(LOG_DIR / "backend.log", encoding="utf-8")
+    )
+except OSError:
+    # Posit Connect or other read-only filesystem — log to stdout only
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "backend.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
+    handlers=_log_handlers,
 )
 
 # ============================================================================
