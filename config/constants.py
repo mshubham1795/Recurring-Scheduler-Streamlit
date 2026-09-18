@@ -10,19 +10,23 @@ from pathlib import Path
 # PLATFORM DETECTION
 # ============================================================================
 PLATFORM = platform.system()  # "Windows" or "Linux"
-IS_POSIT_CONNECT = bool(os.environ.get("RSTUDIO_PRODUCT") == "CONNECT")
+IS_POSIT_CONNECT = (
+    bool(os.environ.get("RSTUDIO_PRODUCT") == "CONNECT")
+    or Path(__file__).resolve().as_posix().startswith("/opt/rstudio-connect")
+)
 IS_HEADLESS = IS_POSIT_CONNECT or PLATFORM != "Windows"
 
 # ============================================================================
-# PATHS -- on Posit Connect, everything must stay inside APP_DIR (writable).
-# Locally, use parent directory for shared persistence.
+# PATHS -- on Posit Connect (Linux), everything must stay inside APP_DIR
+# because the parent directory is read-only.
+# Locally (Windows), use parent directory for shared persistence.
 # ============================================================================
 APP_DIR = Path(__file__).parent.parent  # sas_scheduler_streamlit/
 
-if IS_POSIT_CONNECT:
-    PROJECT_DIR = APP_DIR  # On Connect, APP_DIR is the writable root
+if IS_POSIT_CONNECT or PLATFORM != "Windows":
+    PROJECT_DIR = APP_DIR  # On Connect/Linux, APP_DIR is the writable root
 else:
-    PROJECT_DIR = APP_DIR.parent  # Locally: Recurring_Scheduler/
+    PROJECT_DIR = APP_DIR.parent  # Locally on Windows: Recurring_Scheduler/
 
 SCHEDULES_FILE = PROJECT_DIR / "schedules.json"
 AUTH_METHOD_FILE = PROJECT_DIR / "auth_method.json"
