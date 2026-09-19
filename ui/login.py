@@ -9,8 +9,8 @@ from core.session_persist import get_session_registry
 
 def render_login_page():
     """Render the login page."""
-    # Center the login box
-    col1, col2, col3 = st.columns([1, 1.5, 1])
+    # Center the login box — narrow width for a clean, premium look
+    col1, col2, col3 = st.columns([1.2, 1, 1.2])
 
     with col2:
         # Red "R" logo

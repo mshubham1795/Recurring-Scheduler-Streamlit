@@ -63,14 +63,20 @@ def _render_upload_area():
             key="dl_template"
         )
 
-    # Centered, larger upload area
-    col_l, col_c, col_r = st.columns([1, 6, 1])
+    # Centered upload area with format info below
+    col_l, col_c, col_r = st.columns([1, 4, 1])
     with col_c:
         uploaded = st.file_uploader(
             "Drop schedule Excel here or click to browse",
             type=["xlsx", "xls", "csv"],
             help="Columns: Study_Name, File_Path, File_Name, Start_Time, Frequency (Weekly/Custom), Days_of_Week, End_Date (optional)",
-            key="excel_upload"
+            key="excel_upload",
+            label_visibility="collapsed"
+        )
+        st.markdown(
+            '<p style="text-align:center; color:#888; font-size:12px; margin-top:-8px;">'
+            '200 MB per file &bull; XLSX, XLS, CSV</p>',
+            unsafe_allow_html=True
         )
 
         if uploaded:
@@ -403,41 +409,9 @@ def _render_add_task():
             st.session_state["at_priority"] = "Medium"
         priority = st.selectbox("Priority", ["High", "Medium", "Low"], key="at_priority")
 
-    # Action buttons: Drop file + Add Task
-    from config.constants import IS_HEADLESS
-    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 4])
+    # Action button — clean left-aligned layout
+    btn_col1, btn_col2 = st.columns([1, 5])
     with btn_col1:
-        if not IS_HEADLESS:
-            # Windows/local: show Browse button with native file dialog
-            if st.button("📂 Browse", key="browse_btn", type="secondary", use_container_width=True):
-                with st.spinner("Opening file picker..."):
-                    result = _browse_file()
-                if result:
-                    st.session_state["_browse_path_buf"] = result["path"]
-                    st.session_state["_browse_file_buf"] = result["file"]
-                    st.session_state["_browse_study_buf"] = result["study"] or ""
-                    st.session_state["_browse_pending"] = True
-                    st.toast(f"Selected: {result['file']}")
-                    st.rerun()
-                else:
-                    st.toast("No file selected")
-        else:
-            # Headless/Linux (Posit Connect): drop .sas file to auto-fill name
-            dropped = st.file_uploader(
-                "Drop .sas file", type=["sas"], key="_drop_sas",
-                label_visibility="collapsed",
-                help="Drop a .sas file here to auto-fill the File Name. You still need to enter the File Path manually."
-            )
-            if dropped:
-                filename = dropped.name
-                study_guess = extract_study_from_path(filename)
-                st.session_state["_browse_file_buf"] = filename
-                st.session_state["_browse_study_buf"] = study_guess or ""
-                st.session_state["_browse_pending"] = True
-                st.toast(f"File name auto-filled: {filename}")
-                st.rerun()
-            st.caption("Enter full path above\n(e.g., Z:\\\\qa\\\\...  or  /lillyce/qa/...)")
-    with btn_col2:
         if st.button("Add Task", type="primary", key="add_task_btn", use_container_width=True):
             if not file_name:
                 st.error("File name is required.")
