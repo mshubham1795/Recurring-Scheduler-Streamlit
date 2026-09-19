@@ -3,6 +3,7 @@ Recurring Schedules tab -- active schedules table with sortable headers and Edit
 """
 import streamlit as st
 from core.persistence import load_active_schedules, update_schedule, deactivate_schedule
+from core.user_session import get_session_pool
 
 
 def render():
@@ -19,6 +20,16 @@ def render():
         </div>
         ''', unsafe_allow_html=True)
         return
+
+    # Session health check — warn if the background scheduler has no session
+    if owner_id:
+        pool = get_session_pool()
+        pool_session = pool.get_session(owner_id)
+        if not pool_session:
+            st.warning(
+                "⚠️ **No active background session.** Scheduled jobs will NOT auto-submit until you "
+                "log out and log back in. This happens after a server restart or session expiry."
+            )
 
     # Header
     col1, col2 = st.columns([4, 1])
