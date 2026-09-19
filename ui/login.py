@@ -64,12 +64,6 @@ def render_login_page():
                     else:
                         st.error(msg)
 
-        # Cookie auth link
-        st.markdown("---")
-        if st.button("Use session cookies instead", key="cookie_btn",
-                     use_container_width=True, type="secondary"):
-            _show_cookie_dialog()
-
 
 @st.dialog("Session Cookies")
 def _show_cookie_dialog():

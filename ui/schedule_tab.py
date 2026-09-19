@@ -63,7 +63,7 @@ def _render_upload_area():
             key="dl_template"
         )
 
-    # Centered upload area with format info below
+    # Centered upload area
     col_l, col_c, col_r = st.columns([1, 4, 1])
     with col_c:
         uploaded = st.file_uploader(
@@ -71,12 +71,6 @@ def _render_upload_area():
             type=["xlsx", "xls", "csv"],
             help="Columns: Study_Name, File_Path, File_Name, Start_Time, Frequency (Weekly/Custom), Days_of_Week, End_Date (optional)",
             key="excel_upload",
-            label_visibility="collapsed"
-        )
-        st.markdown(
-            '<p style="text-align:center; color:#888; font-size:12px; margin-top:-8px;">'
-            '200 MB per file &bull; XLSX, XLS, CSV</p>',
-            unsafe_allow_html=True
         )
 
         if uploaded:

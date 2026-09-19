@@ -90,13 +90,13 @@
       "checksum": "1bcf59fe4756bf4102b140b1e3a89f73"
     },
     "ui/login.py": {
-      "checksum": "58d4f395a49b9d5e4cf831d24137493e"
+      "checksum": "fb6992674235e9d0b3338e7082144ac7"
     },
     "ui/recurring_tab.py": {
       "checksum": "a8fe546d18f4e47df145e4c6cc65f111"
     },
     "ui/schedule_tab.py": {
-      "checksum": "fe55ccb06cb4908b0af291397989a895"
+      "checksum": "cc2a7da0c19fdb81a205754478cfcdfb"
     },
     "ui/styles.py": {
       "checksum": "97d31a1dbf080de4f4174b8bb7703daf"
