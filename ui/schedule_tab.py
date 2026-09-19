@@ -370,6 +370,14 @@ def _render_add_task():
             st.session_state["at_study"] = study_buf
         st.session_state["_browse_pending"] = False
 
+    # Auto-populate Study from File Path when path changes
+    _cur_path = st.session_state.get("at_path", "")
+    if _cur_path and _cur_path != st.session_state.get("_prev_at_path", ""):
+        _auto_study = extract_study_from_path(_cur_path)
+        if _auto_study:
+            st.session_state["at_study"] = _auto_study
+    st.session_state["_prev_at_path"] = _cur_path
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         study = st.text_input("Study", placeholder="XXXX", key="at_study")
