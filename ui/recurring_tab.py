@@ -4,6 +4,7 @@ Recurring Schedules tab -- active schedules table with sortable headers and Edit
 import streamlit as st
 from core.persistence import load_active_schedules, update_schedule, deactivate_schedule
 from core.user_session import get_session_pool
+from core.paths import to_linux
 
 
 def render():
@@ -156,6 +157,7 @@ def _render_edit_form(idx, sched):
                 program_stripped = new_program.strip().replace("\\", "/")
                 new_file = program_stripped.split("/")[-1] if "/" in program_stripped else program_stripped
                 new_path = program_stripped.rsplit("/", 1)[0] if "/" in program_stripped else ""
+                new_path = to_linux(new_path)
 
                 schedule_id = sched.get("id")
                 if schedule_id:

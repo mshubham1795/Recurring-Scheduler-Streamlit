@@ -19,7 +19,13 @@ def to_linux(path):
         return "/" + "/".join(parts[1:]) if len(parts) >= 2 else path
     drive = path[:2].upper()
     if drive in DRIVE_MAP:
-        return DRIVE_MAP[drive] + path[2:].replace("\\", "/")
+        prefix = DRIVE_MAP[drive]                    # e.g. "/lillyce"
+        rest = path[2:].replace("\\", "/")           # e.g. "/ly3002813/..." or "/qa/ly3002813/..."
+        linux_path = prefix + rest
+        # Ensure /qa/ is present after /lillyce — users sometimes omit it
+        if linux_path.startswith("/lillyce/") and not linux_path.startswith("/lillyce/qa/"):
+            linux_path = "/lillyce/qa/" + linux_path[len("/lillyce/"):]
+        return linux_path
     return path.replace("\\", "/")
 
 

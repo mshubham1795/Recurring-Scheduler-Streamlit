@@ -444,7 +444,7 @@ def _render_add_task():
                 else:
                     new_sched = {
                         "study": study.strip(),
-                        "path": file_path.strip(),
+                        "path": to_linux(file_path.strip()),
                         "file": file_name.strip(),
                         "time": time_val.strip(),
                         "freq": freq,
@@ -498,7 +498,7 @@ def _save_recurring(job_list):
 
     new_schedules = [{
         "study": j["study"],
-        "path": j["path"],
+        "path": to_linux(j["path"]),
         "file": j["file"],
         "time": j["time"],
         "freq": j["freq"],

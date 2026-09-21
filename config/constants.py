@@ -58,7 +58,7 @@ CLUWE_JOBS = CLUWE_BASE + "/user/ajax/loadComputeJobs"
 # ============================================================================
 # PATH MAPPING (Windows drive letters -> Linux paths for CLUWE)
 # ============================================================================
-DRIVE_MAP = {"Z:": "/lillyce", "Y:": "/lillyce", "X:": "/lillyce"}
+DRIVE_MAP = {"Z:": "/lillyce", "Y:": "/lillyce", "X:": "/lillyce", "W:": "/lillyce"}
 ARTIFACT_PREFIX = "/ifs/statsclstr1/accesszoneprd"
 
 # ============================================================================
