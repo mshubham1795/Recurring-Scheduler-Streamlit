@@ -33,12 +33,23 @@ def render():
             )
 
     # Header
-    col1, col2 = st.columns([4, 1])
+    col1, col2, col3 = st.columns([4, 1, 1])
     with col1:
         st.markdown(f"#### Recurring Schedules ({len(active)})")
     with col2:
         if st.button("🔄 Refresh", key="refresh_recur"):
             st.rerun()
+    with col3:
+        if active:
+            from utils.excel_parser import create_schedule_export
+            export_buf = create_schedule_export(active)
+            st.download_button(
+                "📥 Download",
+                data=export_buf.getvalue(),
+                file_name="recurring_schedules.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="dl_recur_export",
+            )
 
     # Sort state initialization
     if "recur_sort" not in st.session_state:

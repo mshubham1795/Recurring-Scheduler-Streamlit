@@ -134,18 +134,8 @@ def _rows_to_jobs(rows):
     return jobs
 
 
-def create_template_workbook():
-    """Create an Excel template workbook with Instructions and Schedule sheets.
-
-    Returns:
-        BytesIO buffer containing the .xlsx file
-    """
-    wb = openpyxl.Workbook()
-
-    # Instructions sheet
-    ws_instr = wb.active
-    ws_instr.title = "Instructions"
-
+def _write_instructions_sheet(ws):
+    """Write the standard instruction rows to a worksheet."""
     instructions = [
         ["Recurring Scheduler -- Excel Template Instructions"],
         [""],
@@ -185,24 +175,82 @@ def create_template_workbook():
         ["  - CLUWE sends email notifications when jobs complete"],
         ["  - All times are in IST (Indian Standard Time)"],
     ]
-
     for row in instructions:
-        ws_instr.append(row)
-    ws_instr.column_dimensions['A'].width = 80
+        ws.append(row)
+    ws.column_dimensions['A'].width = 80
 
-    # Schedule sheet
-    ws_sched = wb.create_sheet("Schedule")
 
+def _write_schedule_sheet(ws, data_rows=None):
+    """Write Schedule sheet with headers, optional data rows, and column widths."""
     headers = ['Study_Name', 'File_Path', 'File_Name', 'Start_Time',
                'Frequency', 'Days_of_Week', 'End_Date', 'Priority']
-    ws_sched.append(headers)
+    ws.append(headers)
 
-    # No sample data — user fills in their own schedules
+    if data_rows:
+        for s in data_rows:
+            ws.append([
+                s.get("study", ""),
+                s.get("path", ""),
+                s.get("file", ""),
+                s.get("time", ""),
+                s.get("freq", ""),
+                s.get("days", ""),
+                s.get("endDate", ""),
+                s.get("priority", ""),
+            ])
 
-    # Set column widths
     widths = [15, 60, 30, 12, 12, 20, 15, 10]
     for i, w in enumerate(widths, 1):
-        ws_sched.column_dimensions[get_column_letter(i)].width = w
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+
+def create_template_workbook():
+    """Create an Excel template workbook with Instructions and Schedule sheets.
+
+    Returns:
+        BytesIO buffer containing the .xlsx file
+    """
+    wb = openpyxl.Workbook()
+
+    # Instructions sheet
+    ws_instr = wb.active
+    ws_instr.title = "Instructions"
+    _write_instructions_sheet(ws_instr)
+
+    # Schedule sheet (empty — user fills in their own schedules)
+    ws_sched = wb.create_sheet("Schedule")
+    _write_schedule_sheet(ws_sched)
+
+    # Save to buffer
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def create_schedule_export(schedules):
+    """Create an Excel workbook pre-filled with the given schedule data.
+
+    Uses the same template format (Instructions + Schedule sheets) so the
+    exported file can be re-uploaded directly.
+
+    Args:
+        schedules: list of schedule dicts with keys:
+            study, path, file, time, freq, days, endDate, priority
+
+    Returns:
+        BytesIO buffer containing the .xlsx file
+    """
+    wb = openpyxl.Workbook()
+
+    # Instructions sheet
+    ws_instr = wb.active
+    ws_instr.title = "Instructions"
+    _write_instructions_sheet(ws_instr)
+
+    # Schedule sheet with data
+    ws_sched = wb.create_sheet("Schedule")
+    _write_schedule_sheet(ws_sched, data_rows=schedules)
 
     # Save to buffer
     buffer = BytesIO()

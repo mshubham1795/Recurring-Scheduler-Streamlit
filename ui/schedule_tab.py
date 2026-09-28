@@ -378,90 +378,88 @@ def _render_add_task():
             st.session_state["at_study"] = _auto_study
     st.session_state["_prev_at_path"] = _cur_path
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        study = st.text_input("Study", placeholder="XXXX", key="at_study")
-    with col2:
-        file_path = st.text_input("File Path", placeholder="/lillyce/qa/...", key="at_path")
-    with col3:
-        file_name = st.text_input("File Name", placeholder="check.sas", key="at_file")
-    with col4:
-        freq = st.selectbox("Frequency", ["Daily", "Weekly", "Run Now"], key="at_freq")
+    with st.form("add_task_form", clear_on_submit=False):
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            study = st.text_input("Study", placeholder="XXXX", key="at_study")
+        with col2:
+            file_path = st.text_input("File Path", placeholder="/lillyce/qa/...", key="at_path")
+        with col3:
+            file_name = st.text_input("File Name", placeholder="check.sas", key="at_file")
+        with col4:
+            freq = st.selectbox("Frequency", ["Daily", "Weekly", "Run Now"], key="at_freq")
 
-    col5, col6, col7, col8 = st.columns(4)
-    with col5:
-        # Time is disabled when "Run Now" is selected
-        if freq == "Run Now":
-            time_val = st.text_input("Time (HH:MM)", value="", placeholder="N/A (immediate)",
-                                     key="at_time", disabled=True)
-        else:
-            time_val = st.text_input("Time (HH:MM)", placeholder="10:00", key="at_time")
-    with col6:
-        # Days disabled when Daily or Run Now (only relevant for Weekly)
-        if freq == "Weekly":
-            days = st.text_input("Days", placeholder="Mon, Wed, Thu", key="at_days")
-        else:
-            days = st.text_input("Days", value="", placeholder="N/A (Mon-Fri)",
-                                 key="at_days", disabled=True)
-    with col7:
-        end_date = st.date_input("End Date (optional)", value=None, key="at_end")
-    with col8:
-        # Initialize default only once (session state is sole source of truth)
-        if "at_priority" not in st.session_state:
-            st.session_state["at_priority"] = "Medium"
-        priority = st.selectbox("Priority", ["High", "Medium", "Low"], key="at_priority")
+        col5, col6, col7, col8 = st.columns(4)
+        with col5:
+            time_val = st.text_input("Time (HH:MM)", placeholder="10:00 (ignored for Run Now)", key="at_time")
+        with col6:
+            days = st.text_input("Days", placeholder="Mon, Wed, Thu (Weekly only)", key="at_days")
+        with col7:
+            end_date = st.date_input("End Date (optional)", value=None, key="at_end")
+        with col8:
+            # Initialize default only once (session state is sole source of truth)
+            if "at_priority" not in st.session_state:
+                st.session_state["at_priority"] = "Medium"
+            priority = st.selectbox("Priority", ["High", "Medium", "Low"], key="at_priority")
 
-    # Action button — clean left-aligned layout
-    btn_col1, btn_col2 = st.columns([1, 5])
-    with btn_col1:
-        if st.button("Add Task", type="primary", key="add_task_btn", use_container_width=True):
-            if not file_name:
-                st.error("File name is required.")
-            elif not study:
-                st.error("Study name is required.")
-            elif freq == "Run Now":
-                # Run Now: submit immediately to CLUWE, don't save to database
-                from core.jobs import submit_job
-                fn = file_name.strip()
-                if fn and not fn.lower().endswith(".sas"):
-                    fn += ".sas"
-                linux_path = to_linux(file_path.strip()).rstrip("/") + "/" + fn
-                with st.spinner("Submitting to CLUWE..."):
-                    result = submit_job(linux_path, schedule_time_local=None, send_email=True)
-                if result.get("status") == "SUCCESS":
-                    st.session_state["_clear_add_form"] = True
-                    st.session_state["_add_task_success"] = f"✅ Run Now submitted: {study}/{file_name} — executing now!"
-                    st.rerun()
-                else:
-                    st.error(f"Submission failed: {result.get('error', 'Unknown error')}")
+        submitted = st.form_submit_button("Add Task", type="primary", use_container_width=True)
+
+    # --- Submission logic (outside st.form so st.rerun / st.spinner work) ---
+    if submitted:
+        # Auto-populate study from path at submit time if study is empty
+        if file_path and not study:
+            _auto = extract_study_from_path(file_path.strip())
+            if _auto:
+                study = _auto
+                st.session_state["at_study"] = _auto
+
+        if not file_name:
+            st.error("File name is required.")
+        elif not study:
+            st.error("Study name is required.")
+        elif freq == "Run Now":
+            # Run Now: submit immediately to CLUWE, don't save to database
+            from core.jobs import submit_job
+            fn = file_name.strip()
+            if fn and not fn.lower().endswith(".sas"):
+                fn += ".sas"
+            linux_path = to_linux(file_path.strip()).rstrip("/") + "/" + fn
+            with st.spinner("Submitting to CLUWE..."):
+                result = submit_job(linux_path, schedule_time_local=None, send_email=True)
+            if result.get("status") == "SUCCESS":
+                st.session_state["_clear_add_form"] = True
+                st.session_state["_add_task_success"] = f"✅ Run Now submitted: {study}/{file_name} — executing now!"
+                st.rerun()
             else:
-                # Scheduled (Daily/Weekly): validate time and save to database
-                if not time_val or not time_val.strip():
-                    st.error("Time is required (HH:MM format) for scheduled tasks.")
-                elif not re.match(r'^\d{1,2}:\d{2}$', time_val.strip()):
-                    st.error("Time must be HH:MM format (24-hour).")
+                st.error(f"Submission failed: {result.get('error', 'Unknown error')}")
+        else:
+            # Scheduled (Daily/Weekly): validate time and save to database
+            if not time_val or not time_val.strip():
+                st.error("Time is required (HH:MM format) for scheduled tasks.")
+            elif not re.match(r'^\d{1,2}:\d{2}$', time_val.strip()):
+                st.error("Time must be HH:MM format (24-hour).")
+            else:
+                new_sched = {
+                    "study": study.strip(),
+                    "path": to_linux(file_path.strip()),
+                    "file": file_name.strip(),
+                    "time": time_val.strip(),
+                    "freq": freq,
+                    "days": days.strip(),
+                    "endDate": str(end_date) if end_date else "",
+                    "priority": priority,
+                    "active": True,
+                }
+                # Save to database (upsert by owner_id + path + file + time)
+                owner_id = st.session_state.get("user_id")
+                if owner_id:
+                    save_schedule(owner_id, new_sched)
                 else:
-                    new_sched = {
-                        "study": study.strip(),
-                        "path": to_linux(file_path.strip()),
-                        "file": file_name.strip(),
-                        "time": time_val.strip(),
-                        "freq": freq,
-                        "days": days.strip(),
-                        "endDate": str(end_date) if end_date else "",
-                        "priority": priority,
-                        "active": True,
-                    }
-                    # Save to database (upsert by owner_id + path + file + time)
-                    owner_id = st.session_state.get("user_id")
-                    if owner_id:
-                        save_schedule(owner_id, new_sched)
-                    else:
-                        save_schedule(1, new_sched)
-                    # Flag to clear form on next rerun (before widgets render)
-                    st.session_state["_clear_add_form"] = True
-                    st.session_state["_add_task_success"] = f"✅ Task added: {study}/{file_name} at {time_val} ({freq})"
-                    st.rerun()
+                    save_schedule(1, new_sched)
+                # Flag to clear form on next rerun (before widgets render)
+                st.session_state["_clear_add_form"] = True
+                st.session_state["_add_task_success"] = f"✅ Task added: {study}/{file_name} at {time_val} ({freq})"
+                st.rerun()
 
 
 def _save_one(job):
