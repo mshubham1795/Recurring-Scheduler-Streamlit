@@ -422,7 +422,6 @@ def _render_add_task():
             elif freq == "Run Now":
                 # Run Now: submit immediately to CLUWE, don't save to database
                 from core.jobs import submit_job
-                from core.paths import to_linux
                 fn = file_name.strip()
                 if fn and not fn.lower().endswith(".sas"):
                     fn += ".sas"
