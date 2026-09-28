@@ -36,7 +36,13 @@ EXEC_LOG = LOG_DIR / "execution_log.csv"
 # ============================================================================
 # DATABASE (SQLite) -- env-var override for Posit Connect
 # ============================================================================
-DB_DIR = Path(os.environ.get("SCHEDULER_DATA_DIR", str(APP_DIR / "data")))
+# On Posit Connect the bundle directory is replaced on every deploy, so
+# default to the home directory to keep the DB across bundle activations.
+if IS_POSIT_CONNECT:
+    _default_db_dir = str(Path.home() / ".scheduler_data")
+else:
+    _default_db_dir = str(APP_DIR / "data")
+DB_DIR = Path(os.environ.get("SCHEDULER_DATA_DIR", _default_db_dir))
 DB_PATH = DB_DIR / "scheduler.db"
 ENCRYPTION_KEY_ENV = "SCHEDULER_ENCRYPTION_KEY"
 

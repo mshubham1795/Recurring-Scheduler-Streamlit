@@ -402,7 +402,9 @@ def _render_add_task():
                 st.session_state["at_priority"] = "Medium"
             priority = st.selectbox("Priority", ["High", "Medium", "Low"], key="at_priority")
 
-        submitted = st.form_submit_button("Add Task", type="primary", use_container_width=True)
+        btn_col1, btn_col2 = st.columns([1, 5])
+        with btn_col1:
+            submitted = st.form_submit_button("Add Task", type="primary", use_container_width=True)
 
     # --- Submission logic (outside st.form so st.rerun / st.spinner work) ---
     if submitted:
