@@ -69,7 +69,7 @@ def _render_upload_area():
         uploaded = st.file_uploader(
             "Drop schedule Excel here or click to browse",
             type=["xlsx", "xls", "csv"],
-            help="Columns: Study_Name, File_Path, File_Name, Start_Time, Frequency (Weekly/Custom), Days_of_Week, End_Date (optional)",
+            help="Columns: Study_Name, File_Path, File_Name, Start_Time, Frequency (Daily/Weekly), Days_of_Week, End_Date (optional)",
             key="excel_upload",
         )
 
@@ -447,7 +447,7 @@ def _render_add_task():
                     "file": file_name.strip(),
                     "time": time_val.strip(),
                     "freq": freq,
-                    "days": days.strip(),
+                    "days": days.strip() if freq == "Weekly" else "",
                     "endDate": str(end_date) if end_date else "",
                     "priority": priority,
                     "active": True,

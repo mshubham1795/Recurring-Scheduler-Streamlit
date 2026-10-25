@@ -18,12 +18,13 @@ LEGACY_SCHEDULES = PROJECT_DIR / "schedules.json"
 
 def run_migration():
     """Import legacy schedules.json into SQLite if DB is empty. Idempotent.
-    Also renames old frequency values (Weekly->Daily, Custom->Weekly).
+    Legacy frequency names (Weekly->Daily, Custom->Weekly) are converted only
+    for rows imported from schedules.json, never for existing DB rows.
     """
     conn = get_connection()
 
-    # Always rename old frequency values to new naming
-    _rename_frequencies(conn)
+    # One-time repair of Weekly schedules wrongly renamed to Daily
+    _restore_weekly_frequencies(conn)
 
     # Check if schedules table already has data
     count = conn.execute("SELECT COUNT(*) FROM schedules").fetchone()[0]
@@ -58,7 +59,7 @@ def run_migration():
                 s.get("path", ""),
                 s.get("file", ""),
                 s.get("time", ""),
-                s.get("freq", "Daily"),
+                _LEGACY_FREQ_MAP.get(s.get("freq", "Daily"), s.get("freq", "Daily")),
                 s.get("days", ""),
                 s.get("endDate", ""),
                 s.get("priority", "Medium"),
@@ -99,23 +100,32 @@ def _ensure_legacy_user(conn) -> int:
     return row[0]
 
 
-def _rename_frequencies(conn):
-    """Rename old frequency values to new naming convention.
-    Weekly -> Daily, Custom -> Weekly. Idempotent. Skips if already done.
+# Legacy schedules.json naming: old Weekly = Mon-Fri (new Daily),
+# old Custom = specific days (new Weekly)
+_LEGACY_FREQ_MAP = {"Weekly": "Daily", "Custom": "Weekly"}
+
+# PRAGMA user_version value once the Weekly->Daily repair has run
+_FREQ_REPAIR_VERSION = 1
+
+
+def _restore_weekly_frequencies(conn):
+    """One-time repair: a previous startup migration renamed every 'Weekly'
+    schedule to 'Daily' on each restart. Daily tasks never need days, so a
+    'Daily' row with days set was originally Weekly. Also converts any
+    leftover legacy 'Custom' values. Gated by PRAGMA user_version.
     """
-    # Check if there are any old-style values left to rename
-    old_count = conn.execute(
-        "SELECT COUNT(*) FROM schedules WHERE freq IN ('Weekly', 'Custom')"
-    ).fetchone()[0]
-    if old_count == 0:
-        return  # Already renamed or no old values
+    version = conn.execute("PRAGMA user_version").fetchone()[0]
+    if version >= _FREQ_REPAIR_VERSION:
+        return
 
     try:
-        # Rename "Weekly" to "Daily" (old Weekly = Mon-Fri = new Daily)
-        conn.execute("UPDATE schedules SET freq = 'Daily' WHERE freq = 'Weekly'")
-        # Rename "Custom" to "Weekly" (old Custom = specific days = new Weekly)
-        conn.execute("UPDATE schedules SET freq = 'Weekly' WHERE freq = 'Custom'")
+        restored = conn.execute(
+            "UPDATE schedules SET freq = 'Weekly' "
+            "WHERE freq IN ('Daily', 'Custom') AND TRIM(COALESCE(days, '')) != ''"
+        ).rowcount
+        conn.execute(f"PRAGMA user_version = {_FREQ_REPAIR_VERSION}")
         conn.commit()
-        log.info(f"[MIGRATION] Renamed frequency values for {old_count} schedule(s)")
+        log.info(f"[MIGRATION] Restored Weekly frequency for {restored} schedule(s)")
     except Exception as e:
-        log.warning(f"[MIGRATION] Could not rename frequencies (will retry next run): {e}")
+        conn.rollback()
+        log.warning(f"[MIGRATION] Could not restore Weekly frequencies (will retry next run): {e}")
